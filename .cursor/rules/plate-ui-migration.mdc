@@ -1,0 +1,98 @@
+---
+description: 
+globs: src/registry/**/*.tsx
+alwaysApply: false
+---
+# Plate UI Migration Guide
+
+This guide outlines the patterns to follow when migrating components to match the new plate-ui structure while preserving existing functionality.
+
+## Import Patterns
+- Use `import * as React from 'react'` instead of destructured imports. DO NOT import anything (even types) from React. Always use `React.`
+- Import `cn` from `@/lib/utils` instead of `@udecode/cn`
+- Keep other existing component/utility imports as they are
+
+## Component Patterns
+- Use named function exports: `export function MyComponent()` instead of `export const MyComponent =`
+- Remove `withRef` usage entirely (React 19 includes ref in props)
+- Replace `withVariants` with `cva` + named function + `VariantProps`
+- Keep `withProps` from `@udecode/cn`
+- Remove `forwardRef` usage (unnecessary in React 19)
+- Remove `ref` and `className` props when removing `withRef`
+- Keep all existing tailwind classes and styling - NEVER change existing classes
+- Keep all existing component structure and hierarchy
+- Only update React patterns like imports and exports
+- Remove `cn()` if there is only one param like `cn('flex flex-col')`. Keep `cn` otherwise.
+
+## className Handling
+- Keep using `cn()` for combining multiple classes and conditional classes within components
+- Do NOT merge `props.className` for on Plate/SlateElement/Leaf (they handle merging internally)
+
+## React 19 Changes
+- `ref` is now included in the props parameter
+- No need for `forwardRef` or `withRef`
+- Access ref directly from props: `props.ref` instead of second parameter
+- TypeScript types automatically include ref in props
+
+## React Hooks
+- Use `React.useMemo` instead of destructured `useMemo`
+- Keep all existing hook logic and dependencies
+- Keep all existing state management
+
+## Example Files
+Current migration examples:
+- [src/registry/default/potion-ui/ai-anchor-element.tsx](mdc:src/registry/default/potion-ui/ai-anchor-element.tsx)
+- [src/registry/default/potion-ui/ai-leaf.tsx](mdc:src/registry/default/potion-ui/ai-leaf.tsx)
+- [avatar.tsx](mdc:src/registry/default/potion-ui/avatar.tsx)
+
+## What NOT to Change
+- **ABSOLUTELY DO NOT** modify existing functionality, component logic or Tailwind classes. The rendered JSX / behavior must remain **IDENTICAL**.
+- **DO NOT** change the core structure or hierarchy of the component. Work within the existing layout.
+- **DO NOT** update or remove any existing Tailwind classes. Styling must be preserved exactly.
+- **DO NOT** change existing state management hooks or logic.
+- **DO NOT** change the other imports (e.g. `@/registry/...`)
+- **DO NOT** export what was not exported
+- **DO NOT** import `withProps` from `@/lib/utils`
+- **DO NOT** use props.className, props.style from `PlateElementProps`, `PlateLeafProps`
+- **DO NOT** destructure className, style, children from PlateElement, PlateLeaf
+
+## Migration Checklist
+1. Update React import to `import * as React`
+2. Update `cn` import to be from `@/lib/utils`
+3. Change export to named function
+4. Remove `withRef` and `forwardRef` (React 19 handles refs in props)
+5. Update ref handling to use `props.ref` instead of second parameter
+6. Remove `ref` and `className` props if `withRef` was removed
+7. Update hook imports to use `React.` prefix
+8. Keep ALL existing tailwind classes - do not remove any
+9. Keep all existing logic and functionality
+
+The goal is **SOLELY** to update the coding patterns (imports, exports, ref handling) to match plate-ui while keeping the exact same functionality, styling, structure, and behavior. **DO NOT REWRITE THE COMPONENT.**
+
+## PlateElement/SlateElement/PlateLeaf/SlateLeaf HTML Attributes
+- HTML attributes (like `onClick`, `data-*`, `contentEditable`, `draggable`) must be passed through the `attributes` prop EXCEPT `as`, `className` and `style`.
+- Always spread existing attributes with `...props.attributes`
+- Example:
+  ```tsx
+  // DO: Pass HTML attributes through attributes prop
+  <PlateElement
+    {...props}
+    className={cn('your-classes')}
+    attributes={{
+      ...props.attributes,
+      onClick: yourHandler,
+      'data-slate-value': value,
+      contentEditable: false,
+      draggable: true
+    }}
+  >
+
+  // DON'T: Pass HTML attributes directly to PlateElement
+  <PlateElement
+    {...props}
+    onClick={yourHandler}  // ❌
+    data-slate-value={value}  // ❌
+    contentEditable={false}  // ❌
+    draggable  // ❌
+  >
+  ```
